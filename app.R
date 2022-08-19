@@ -1,110 +1,127 @@
 library(shiny)
 library(tidyverse)
 
+US_birth <- read_csv(file = "/Users/hexiaotao/Desktop/shiny--lpan0037/us_births_2000-2014.csv")
+US_birth$Date <-as.Date(with(US_birth,paste(year,month,date_of_month,sep="-")),"%Y-%m-%d")
+US_birth$year <- as.character(US_birth$year)
+
 ui <- fluidPage(
 
-    titlePanel("Old Faithful Geyser Data"),
+    titlePanel("US Birth Data"),
 
-    h3("1. What number of bins do you stop seeing bimodality in the waiting time?"),
-    fluidRow(
-      sidebarLayout(
-          sidebarPanel(
-              sliderInput("bins",
-                          "Number of bins:",
-                          min = 1,
-                          max = 50,
-                          value = 30)
-          ),
-
+       h3("Birth Number by Different Dimension"),
+       fluidRow(
+         sidebarLayout(
+           sidebarPanel(
+            checkboxGroupInput("classify", "Select the year:",
+                               choices = c("2001", "2002", "2003","2004","2005","2006","2007",
+                                           "2008","2009","2010","2011","2012","2013","2014"),
+                               selected = c("2001", "2002", "2003","2004","2005","2006","2007",
+                                            "2008","2009","2010","2011","2012","2013","2014"))
+        ),
           mainPanel(
-             plotOutput("distPlot")
+            tabsetPanel(type = "tabs",
+                        tabPanel("Overall", plotOutput("plot")),
+                        tabPanel("By_Month", plotOutput("plot1")),
+                        tabPanel("By_Day", plotOutput("plot2")),
+                        tabPanel("By_Week", plotOutput("plot3"))
+            )
           )
-      )
-    ),
+         )
+       ),
 
-    h3("2. How do the different geoms change the view of the data?"),
+    h3("Birth Number in Specific Period"),
     fluidRow(
       sidebarLayout(
         sidebarPanel(
-          radioButtons("geom",
-                      "Geom choice:",
-                      choices = c("geom_point",
-                                  "geom_density_2d",
-                                  "geom_density_2d_filled",
-                                  "geom_bin_2d",
-                                  "geom_hex"))
+          dateRangeInput("dates", label = "Select the date range:",
+                         start = "2000-01-01", end = "2014-12-31")
         ),
-
         mainPanel(
-          plotOutput("plot")
+          plotOutput("trend_plot")
         )
       )
     ),
 
-    h3("3. Is a mixture of two normal distribution good fit on eruption time?"),
-    fluidRow(
-      sidebarLayout(
-        sidebarPanel(
-          sliderInput("bins2",
-                      "Adjust the number of bins (if needed):",
-                      min = 1,
-                      max = 50,
-                      value = 30),
-          "Enter your guess for the:",
-          numericInput("p", "Mixing probability:",
-                       value = 0.35, min = 0, max = 1),
-          numericInput("mean1", "Mean of the first group:",
-                       value = 2.02),
-          numericInput("mean2", "Mean of the second group:",
-                       value = 4.27),
-          numericInput("sd1", "Standard deviation of the first group:",
-                       value = 0.24, min = 0),
-          numericInput("sd2", "Standard deviation of the second group:",
-                       value = 0.44, min = 0)
-        ),
-
-        mainPanel(
-          plotOutput("mixDistFit")
-        )
-      )
-    ),
+       fluidRow(
+         column(10,
+                div(class = "about",
+                    uiOutput('about'))
+         )
+       ),
+       includeCSS("styles.css")
+       )
 
 
-    fluidRow(
-      column(10,
-             div(class = "about",
-                 uiOutput('about'))
-      )
-    ),
-    includeCSS("styles.css")
-)
 
 server <- function(input, output) {
 
-    output$distPlot <- renderPlot({
-        ggplot(faithful, aes(waiting)) +
-         geom_histogram(bins = input$bins, color = "white") +
-         theme_bw(base_size = 14) +
-         labs(x = "Waiting time", y = "Count")
-    })
-
     output$plot <- renderPlot({
-      ggplot(faithful, aes(waiting, eruptions)) +
-        get(input$geom)() +
-        theme_bw(base_size = 14) +
-        labs(x = "Waiting time", y = "Eruption time")
+      US_birth %>%
+        filter(year == input$classify) %>%
+        group_by(year) %>%
+        summarise(births_year = sum(births)) %>%
+        ggplot(aes(year,births_year))+
+        geom_col()+
+        labs(x = "Year",
+             y = "US_Birth_Number",
+             title = "US Birth Number in Defferent Years") +
+        theme_bw()
     })
 
-    output$mixDistFit <- renderPlot({
-      df <- data.frame(x = seq(min(faithful$eruptions), max(faithful$eruptions), length = 1000)) %>%
-        mutate(density = input$p * dnorm(x, input$mean1, input$sd1) +
-                         (1 - input$p) * dnorm(x, input$mean2, input$sd2))
+    output$plot1 <- renderPlot({
+      US_birth %>%
+        filter(year == input$classify) %>%
+        group_by(year,month) %>%
+        summarise(births_month = sum(births)) %>%
+        ggplot(aes(x = month, y = births_month, fill = year)) +
+        geom_col(position="stack") +
+        labs(x = "Month",
+             y = "US_Birth_Number",
+             title = "US Birth Number from January to December") +
+        scale_x_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10,11,12)) +
+        theme_bw()
+    })
 
-      ggplot(faithful, aes(eruptions)) +
-        geom_histogram(aes(y = stat(density)), bins = input$bins2, color = "white") +
-        geom_line(data = df, aes(x = x, y = density), color = "red", size = 2) +
-        theme_bw(base_size = 14) +
-        labs(x = "Eruption time", y = "Density")
+    output$plot2 <- renderPlot({
+      US_birth %>%
+        filter(year == input$classify) %>%
+        group_by(year,date_of_month) %>%
+        summarise(births_date = sum(births)) %>%
+        ggplot(aes(x = date_of_month, y = births_date, fill = year)) +
+        geom_col(position="stack") +
+        labs(x = "Day",
+             y = "US_Birth_Number",
+             title = "US Birth Number from 1st to 31st per Month") +
+        scale_x_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10,
+                                      11,12,13,14,15,16,17,18,19,20,
+                                      21,22,23,24,25,26,27,28,29,30,31)) +
+        theme_bw()
+    })
+
+    output$plot3 <- renderPlot({
+      US_birth %>%
+        filter(year == input$classify) %>%
+        group_by(year,day_of_week) %>%
+        summarise(births_week = sum(births)) %>%
+        ggplot(aes(x = day_of_week, y = births_week, fill = year)) +
+        geom_col(position="stack") +
+        labs(x = "Day",
+             y = "US_Birth_Number",
+             title = "US Birth Number from Monday to Sunday per Week") +
+        scale_x_continuous(breaks = c(1,2,3,4,5,6,7)) +
+        theme_bw()
+    })
+
+
+    output$trend_plot <- renderPlot({
+      US_birth %>%
+        filter(between(Date, as.Date(input$dates[1]), as.Date(input$dates[2]))) %>%
+        ggplot(aes(Date,births)) +
+        geom_line() +
+        labs(x = "Date",
+             y = "US_Birth_Number") +
+        theme_bw()
     })
 
     output$about <- renderUI({
@@ -113,5 +130,6 @@ server <- function(input, output) {
         HTML()
     })
 }
+
 
 shinyApp(ui = ui, server = server)
