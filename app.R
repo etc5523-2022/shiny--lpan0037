@@ -1,11 +1,22 @@
 library(shiny)
 library(tidyverse)
+library(bslib)
+library(showtext)
+library(thematic)
 
 US_birth <- read_csv(file = "/Users/hexiaotao/Desktop/shiny--lpan0037/us_births_2000-2014.csv")
+
 US_birth$Date <-as.Date(with(US_birth,paste(year,month,date_of_month,sep="-")),"%Y-%m-%d")
+
 US_birth$year <- as.character(US_birth$year)
 
+my_theme <- bs_theme(bootswatch = "default",
+                     base_font = font_google("Righteous"))
+thematic_shiny(font = "auto")
+
 ui <- fluidPage(
+
+    theme = my_theme,
 
     titlePanel("US Birth Data"),
 
@@ -17,11 +28,11 @@ ui <- fluidPage(
                                choices = c("2001", "2002", "2003","2004","2005","2006","2007",
                                            "2008","2009","2010","2011","2012","2013","2014"),
                                selected = c("2001", "2002", "2003","2004","2005","2006","2007",
-                                            "2008","2009","2010","2011","2012","2013","2014"))
+                                            "2008","2009","2010"))
         ),
           mainPanel(
             tabsetPanel(type = "tabs",
-                        tabPanel("Overall", plotOutput("plot")),
+                        tabPanel("Overall", tableOutput("plot")),
                         tabPanel("By_Month", plotOutput("plot1")),
                         tabPanel("By_Day", plotOutput("plot2")),
                         tabPanel("By_Week", plotOutput("plot3"))
@@ -56,17 +67,13 @@ ui <- fluidPage(
 
 server <- function(input, output) {
 
-    output$plot <- renderPlot({
+    output$plot <- renderTable({
       US_birth %>%
         filter(year == input$classify) %>%
         group_by(year) %>%
-        summarise(births_year = sum(births)) %>%
-        ggplot(aes(year,births_year))+
-        geom_col()+
-        labs(x = "Year",
-             y = "US_Birth_Number",
-             title = "US Birth Number in Defferent Years") +
-        theme_bw()
+        summarise(Birth_Num = sum(births)) %>%
+        mutate('Rate(%)' = Birth_Num/sum(Birth_Num)*100) %>%
+        rename("Year" = year)
     })
 
     output$plot1 <- renderPlot({
