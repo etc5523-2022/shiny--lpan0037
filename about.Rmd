@@ -11,7 +11,7 @@ The purpose of the app is to:
 1. explore patterns and trends in the number of births in the United States from different time dimensions, and
 2. show the change in the number of births per day in the United States over specific date periods.
 
-The data showed that the number of births in the United States is regular. The app used bar chart to show the change in birth number over a time cycle by multiple time dimensions, such as year, month, day and week. And by creating line graphs to further explore the pattern of changes in the number of births over a specific date period.
+The data showed that the number of births in the United States is regular. The app used table and bar chart to show the change in birth number over a time cycle by multiple time dimensions, such as year, month, day and week. And by creating line graphs to further explore the pattern of changes in the number of births over a specific date period.
 
 #### Creator
 
