@@ -8,4 +8,4 @@ This is ETC5523 Assessment 1.
 
 The goal of the app is in part explanatory (identify factors that affect what we see in a plot) and in part descriptive (describing the trend of change of data).
 
-The link to the app can be found at [https://ebsmonash.shinyapps.io/etc5523-assessment1-sample/](https://ebsmonash.shinyapps.io/etc5523-assessment1-sample/)
+The link to the app can be found at [https://focmda-liwen-pan.shinyapps.io/US_Birth_Trend--lpan0037/](https://focmda-liwen-pan.shinyapps.io/US_Birth_Trend--lpan0037/)
