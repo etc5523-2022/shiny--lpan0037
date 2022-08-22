@@ -4,19 +4,22 @@ library(bslib)
 library(showtext)
 library(thematic)
 
-US_birth <- read_csv(file = "/Users/hexiaotao/Desktop/shiny--lpan0037/us_births_2000-2014.csv")
+US_birth <- read_csv(file = "us_births_2000-2014.csv")
 
 US_birth$Date <-as.Date(with(US_birth,paste(year,month,date_of_month,sep="-")),"%Y-%m-%d")
 
 US_birth$year <- as.character(US_birth$year)
 
-my_theme <- bs_theme(bootswatch = "default",
+my_theme <- bs_theme(bootswatch = "darkly",
                      base_font = font_google("Righteous"))
+
 thematic_shiny(font = "auto")
 
 ui <- fluidPage(
 
     theme = my_theme,
+
+    radioButtons("current_theme", "App Theme:", c("Light" = "cerulean", "Dark" = "darkly")),
 
     titlePanel("US Birth Data"),
 
@@ -36,8 +39,8 @@ ui <- fluidPage(
                         tabPanel("By_Month", plotOutput("plot1")),
                         tabPanel("By_Day", plotOutput("plot2")),
                         tabPanel("By_Week", plotOutput("plot3"))
-            )
-          )
+             )
+           )
          )
        ),
 
@@ -65,7 +68,13 @@ ui <- fluidPage(
 
 
 
-server <- function(input, output) {
+server <- function(input, output, session) {
+
+    observe({
+      session$setCurrentTheme(
+        bs_theme_update(my_theme, bootswatch = input$current_theme)
+      )
+    })
 
     output$plot <- renderTable({
       US_birth %>%
@@ -86,8 +95,7 @@ server <- function(input, output) {
         labs(x = "Month",
              y = "US_Birth_Number",
              title = "US Birth Number from January to December") +
-        scale_x_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10,11,12)) +
-        theme_bw()
+        scale_x_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10,11,12))
     })
 
     output$plot2 <- renderPlot({
@@ -102,8 +110,7 @@ server <- function(input, output) {
              title = "US Birth Number from 1st to 31st per Month") +
         scale_x_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10,
                                       11,12,13,14,15,16,17,18,19,20,
-                                      21,22,23,24,25,26,27,28,29,30,31)) +
-        theme_bw()
+                                      21,22,23,24,25,26,27,28,29,30,31))
     })
 
     output$plot3 <- renderPlot({
@@ -116,8 +123,7 @@ server <- function(input, output) {
         labs(x = "Day",
              y = "US_Birth_Number",
              title = "US Birth Number from Monday to Sunday per Week") +
-        scale_x_continuous(breaks = c(1,2,3,4,5,6,7)) +
-        theme_bw()
+        scale_x_continuous(breaks = c(1,2,3,4,5,6,7))
     })
 
 
@@ -127,8 +133,7 @@ server <- function(input, output) {
         ggplot(aes(Date,births)) +
         geom_line() +
         labs(x = "Date",
-             y = "US_Birth_Number") +
-        theme_bw()
+             y = "US_Birth_Number")
     })
 
     output$about <- renderUI({
